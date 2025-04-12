@@ -77,7 +77,7 @@ When running in WebSocket mode (`WS_MODE=1`), the server exposes two endpoints:
 
 Below is a sample Prometheus dashboard visualizing QuickPulse metrics:
 
-![Prometheus Dashboard](docs/prometheus_dashboard.png)
+[Prometheus Dashboard](docs/prometheus_dashboard.png)
 
 _Place your Prometheus dashboard screenshot at `docs/prometheus_dashboard.png` to display it here._
 - `ws://<host>:8081/ws/publish`:  

@@ -1,4 +1,4 @@
-# Message Queue System (Go, gRPC & WebSocket)
+# QuickPulseMQ
 ```
 ***************************************************
 *   ____       _      _      ___       _          *

@@ -1,0 +1,60 @@
+@startuml
+' Quickpulse Component Diagram
+
+package "main" {
+  [main.go]
+}
+
+package "mq" {
+  [Message]
+  [Queue]
+  [MessageQueue]
+}
+
+package "mqmetrics" {
+  [InstrumentedQueue]
+  [MetricsCollector]
+  [DefaultMetrics]
+  [PrometheusMetrics]
+}
+
+package "server" {
+  [GrpcUnaryServer]
+  [GrpcStreamServer]
+  [WsServer]
+}
+
+package "proto" {
+  [ProduceRequest]
+  [ProduceResponse]
+  [ConsumeRequest]
+  [ConsumeResponse]
+  [StreamMessage]
+  [MessageQueueServer]
+}
+
+[main.go] --> [MessageQueue]
+[main.go] --> [InstrumentedQueue]
+[main.go] --> [GrpcUnaryServer]
+[main.go] --> [GrpcStreamServer]
+[main.go] --> [WsServer]
+
+[GrpcUnaryServer] --> [InstrumentedQueue]
+[GrpcStreamServer] --> [InstrumentedQueue]
+[WsServer] --> [InstrumentedQueue]
+
+[InstrumentedQueue] ..> [MessageQueue]
+[InstrumentedQueue] ..> [MetricsCollector]
+[DefaultMetrics] ..|> [MetricsCollector]
+[PrometheusMetrics] ..|> [MetricsCollector]
+
+[GrpcUnaryServer] ..|> [MessageQueueServer]
+[GrpcStreamServer] ..|> [MessageQueueServer]
+
+[GrpcUnaryServer] --> [ProduceRequest]
+[GrpcUnaryServer] --> [ProduceResponse]
+[GrpcUnaryServer] --> [ConsumeRequest]
+[GrpcUnaryServer] --> [ConsumeResponse]
+[GrpcStreamServer] --> [StreamMessage]
+
+@enduml

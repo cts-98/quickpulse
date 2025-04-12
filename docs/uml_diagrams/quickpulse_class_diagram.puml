@@ -1,0 +1,89 @@
+@startuml
+' Quickpulse Class Diagram
+
+package mq {
+  class Message {
+    - id: string
+    - payload: []byte
+  }
+  interface Queue {
+    + Enqueue(msg: []byte): error
+    + Dequeue(): ([]byte, error)
+  }
+  class MessageQueue {
+    + Enqueue(msg: []byte): error
+    + Dequeue(): ([]byte, error)
+  }
+  MessageQueue ..|> Queue
+}
+
+package mqmetrics {
+  interface MetricsCollector {
+    + GetThroughput(): (int64, int64)
+    + GetQueueDepth(): int64
+    + IncEnqueue()
+    + IncDequeue()
+  }
+  class DefaultMetrics {
+    + GetThroughput(): (int64, int64)
+    + GetQueueDepth(): int64
+    + IncEnqueue()
+    + IncDequeue()
+  }
+  class PrometheusMetrics {
+    + GetThroughput(): (int64, int64)
+    + GetQueueDepth(): int64
+    + IncEnqueue()
+    + IncDequeue()
+  }
+  class InstrumentedQueue {
+    - queue: mq.MessageQueue
+    - metrics: MetricsCollector
+    + Enqueue(msg: []byte): error
+    + Dequeue(): ([]byte, error)
+  }
+  DefaultMetrics ..|> MetricsCollector
+  PrometheusMetrics ..|> MetricsCollector
+  InstrumentedQueue --> mq.MessageQueue
+  InstrumentedQueue --> MetricsCollector
+}
+
+package server {
+  class GrpcUnaryServer {
+    + Produce(ctx, req): ProduceResponse
+    + Consume(ctx, req): ConsumeResponse
+  }
+  class GrpcStreamServer {
+    + StreamMessages(stream)
+  }
+  class WsServer {
+    + PublishHandler(w, r)
+    + ConsumeHandler(w, r)
+  }
+  GrpcUnaryServer --> mqmetrics.InstrumentedQueue
+  GrpcStreamServer --> mqmetrics.InstrumentedQueue
+  WsServer --> mqmetrics.InstrumentedQueue
+}
+
+package proto {
+  class ProduceRequest
+  class ProduceResponse
+  class ConsumeRequest
+  class ConsumeResponse
+  class StreamMessage
+  interface MessageQueueServer {
+    + Produce()
+    + Consume()
+    + StreamMessages()
+  }
+  GrpcUnaryServer ..|> MessageQueueServer
+  GrpcStreamServer ..|> MessageQueueServer
+}
+
+main ..> mq.MessageQueue
+main ..> mqmetrics.InstrumentedQueue
+main ..> server.GrpcUnaryServer
+main ..> server.GrpcStreamServer
+main ..> server.WsServer
+
+@enduml

@@ -1,0 +1,100 @@
+@startuml
+allowmixing
+title Message Queue System (Go, gRPC & WebSocket)
+
+' Message struct
+class Message {
+    + payload: bytes
+    + id: string
+}
+
+' MessageQueue struct
+class MessageQueue {
+    - messages: Message[]
+    - mu: Mutex
+    + Enqueue(msg): error
+    + Dequeue(): (msg, error)
+}
+
+' InstrumentedQueue struct
+class InstrumentedQueue {
+    - queue: MessageQueue
+    - metrics: MetricsCollector
+    + Enqueue(msg): error
+    + Dequeue(): (msg, error)
+}
+
+' MetricsCollector interface and implementations
+interface MetricsCollector {
+    + IncEnqueue()
+    + IncDequeue()
+    + GetThroughput(): (int64, int64)
+    + GetQueueDepth(): int64
+}
+class DefaultMetrics
+class PrometheusMetrics
+
+MetricsCollector <|.. DefaultMetrics
+MetricsCollector <|.. PrometheusMetrics
+
+InstrumentedQueue --> MessageQueue : wraps
+InstrumentedQueue --> MetricsCollector : uses
+
+' GrpcUnaryServer struct (gRPC unary)
+class GrpcUnaryServer {
+    + Produce(ctx, req): ProduceResponse
+    + Consume(ctx, req): ConsumeResponse
+}
+
+' GrpcStreamServer struct (gRPC streaming)
+class GrpcStreamServer {
+    + StreamMessages(stream): stream
+}
+
+' WsServer struct (implements WebSocket API)
+class WsServer {
+    + PublishHandler(w, r)
+    + ConsumeHandler(w, r)
+}
+
+' PerfClient (external actor)
+actor PerfClient
+
+' Protobuf/gRPC service interface
+interface MessageQueueService {
+    + Produce(ProduceRequest): ProduceResponse
+    + Consume(ConsumeRequest): ConsumeResponse
+    + StreamMessages(stream StreamMessage): stream StreamMessage
+}
+
+' WebSocket endpoints
+class WebSocketAPI {
+    + /ws/publish
+    + /ws/consume
+}
+
+GrpcUnaryServer --> InstrumentedQueue : uses
+GrpcStreamServer --> InstrumentedQueue : uses
+WsServer --> InstrumentedQueue : uses
+InstrumentedQueue "1" o-- "*" Message : contains
+GrpcUnaryServer ..|> MessageQueueService : implements
+GrpcStreamServer ..|> MessageQueueService : implements
+MessageQueueService --> ProduceRequest
+MessageQueueService --> ProduceResponse
+MessageQueueService --> ConsumeRequest
+MessageQueueService --> ConsumeResponse
+
+WsServer --> WebSocketAPI : exposes
+
+PerfClient --> GrpcUnaryServer : tests unary
+PerfClient --> GrpcStreamServer : tests streaming
+PerfClient --> WsServer : tests ws
+
+note top of GrpcUnaryServer
+Mode selection is controlled by
+WS_MODE, RPC_MODE, and RPC_STREAM_MODE
+environment variables. Only one server
+is active at a time.
+end note
+
+@enduml

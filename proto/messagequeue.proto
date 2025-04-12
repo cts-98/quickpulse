@@ -1,0 +1,42 @@
+syntax = "proto3";
+
+package messagequeue;
+
+option go_package = "quickpulse/proto;proto";
+
+// The MessageQueue service definition.
+service MessageQueue {
+  // Produce a message to the queue.
+  rpc Produce (ProduceRequest) returns (ProduceResponse);
+
+  // Consume a message from the queue.
+  rpc Consume (ConsumeRequest) returns (ConsumeResponse);
+  // Bidirectional streaming for messages.
+  rpc StreamMessages(stream StreamMessage) returns (stream StreamMessage);
+}
+
+
+// Request to produce a message (binary payload).
+message ProduceRequest {
+  bytes payload = 1;
+}
+
+// Response for produce (acknowledgement).
+message ProduceResponse {
+  bool success = 1;
+  string error = 2;
+}
+
+// Request to consume a message.
+message ConsumeRequest {}
+
+// Response for consume (binary payload).
+message ConsumeResponse {
+  bytes payload = 1;
+  string error = 2;
+}
+
+message StreamMessage {
+  bytes payload = 1;
+  string error = 2;
+}

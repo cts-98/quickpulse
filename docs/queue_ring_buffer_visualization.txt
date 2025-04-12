@@ -1,0 +1,63 @@
+MessageQueue Ring Buffer Visualization
+======================================
+Note: The ring buffer implementation is shared by both the gRPC and WebSocket servers. Only one server is active at a time, depending on the WS_MODE or RPC_MODE environment variable.
+
+Legend:
+[ ] = empty slot
+[A] = slot containing message "A"
+head = index to read (dequeue)
+tail = index to write (enqueue)
+capacity = 5 (for example)
+
+Initial State (empty queue):
+buffer: [ ] [ ] [ ] [ ] [ ]
+head: 0
+tail: 0
+
+Enqueue "A":
+buffer: [A] [ ] [ ] [ ] [ ]
+head: 0
+tail: 1
+
+Enqueue "B":
+buffer: [A] [B] [ ] [ ] [ ]
+head: 0
+tail: 2
+
+Enqueue "C":
+buffer: [A] [B] [C] [ ] [ ]
+head: 0
+tail: 3
+
+Dequeue (removes "A"):
+buffer: [ ] [B] [C] [ ] [ ]
+head: 1
+tail: 3
+
+Enqueue "D":
+buffer: [ ] [B] [C] [D] [ ]
+head: 1
+tail: 4
+
+Enqueue "E":
+buffer: [ ] [B] [C] [D] [E]
+head: 1
+tail: 5
+
+Enqueue "F" (wraps around, since tail % capacity = 0):
+buffer: [F] [B] [C] [D] [E]
+head: 1
+tail: 6
+
+Dequeue (removes "B"):
+buffer: [F] [ ] [C] [D] [E]
+head: 2
+tail: 6
+
+At any time:
+- The number of items in the queue is (tail - head).
+- Enqueue writes to buffer[tail % capacity].
+- Dequeue reads from buffer[head % capacity].
+- When tail or head reach capacity, they wrap around due to modulo operation.
+
+This circular approach allows efficient use of the buffer without shifting elements.

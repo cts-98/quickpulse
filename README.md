@@ -79,7 +79,6 @@ Below is a sample Prometheus dashboard visualizing QuickPulse metrics:
 
 [Prometheus Dashboard](docs/prometheus_dashboard.png)
 
-_Place your Prometheus dashboard screenshot at `docs/prometheus_dashboard.png` to display it here._
 - `ws://<host>:8081/ws/publish`:  
   Clients connect and send messages (as binary/text frames) to be enqueued.  
   The server responds with "ok" or "error: ..." for each message.
